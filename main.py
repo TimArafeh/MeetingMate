@@ -1,13 +1,13 @@
 import os.path
 import datetime as dt
 
-from google.auth.transport.requests import Requests
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_outhlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-SCOPES = ["https://www.googleapis.com/auth/calender"]
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def main():
     creds = None
@@ -44,3 +44,6 @@ def main():
             
     except HttpError as error:
         print("An error occured: ", error)
+
+if __name__ == "__main__":
+    main()
