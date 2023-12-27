@@ -7,7 +7,28 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-SCOPES = ["https://www.googleapis.com/auth/calendar"]
+SCOPES = ["https://www.googleapis.com/auth/calendar",
+          "https://www.googleapis.com/auth/gmail.compose"]
+
+
+from email.mime.text import MIMEText
+import base64
+
+def create_message(sender, to, subject, message_text):
+    message = MIMEText(message_text)
+    message['to'] = to
+    message['from'] = sender
+    message['subject'] = subject
+    return {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
+
+def send_message(service, user_id, message):
+    try:
+        message = service.users().messages().send(userId=user_id, body=message).execute()
+        print(f"Message Id: {message['id']}")
+        return message
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return None
 
 def main():
     creds = None
@@ -56,8 +77,15 @@ def main():
         }
 
         event = service.events().insert(calendarId="primary",body=event).execute()
-
         print(f"Event created {event.get('htmlLink')}")
+
+
+        for attendee in event['atendees']:
+            email = attendee['email']
+            email_body = f"Hello, \n\nYou have an upcoming event: {event['summary']} on {event['start']['dateTime']}.\n\nBest regards"
+            message = create_message('your-email@gmail.com', email, 'Event Reminder', email body)
+            send_message(service, 'me', message)
+
 
     except HttpError as error:
         print("An error occured: ", error)
