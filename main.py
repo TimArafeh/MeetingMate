@@ -82,8 +82,8 @@ def main():
 
         for attendee in event['atendees']:
             email = attendee['email']
-            email_body = f"Hello, \n\nYou have an upcoming event: {event['summary']} on {event['start']['dateTime']}.\n\nBest regards"
-            message = create_message('your-email@gmail.com', email, 'Event Reminder', email body)
+            email_body = f"Hello, \n\nYou have an upcoming event: {event['summary']} on {event['start']['dateTime']}.\n\nBest regards."
+            message = create_message('your-email@gmail.com', email, 'Event Reminder', email_body)
             send_message(service, 'me', message)
 
 
