@@ -11,7 +11,7 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def main():
     creds = None
-    
+    exit
     if os.path.exists("token.json"):
         creds = Credentials.from_authorized_user_file("token.json")
     
@@ -26,22 +26,39 @@ def main():
             token.write(creds.to_json())
 
     try:
-        service = build("calender", "v3", credentials=creds)
+        service = build("calendar", "v3", credentials=creds)
 
-        now = dt.datetime.now().isoformat() + "Z"
+        event = {
+            "summary": "My Python Event",
+            "location": "Somewhere Online",
+            "description": "Some more details on this awesome event",
+            "colorId": 6,
+            "start": {
+                "dateTime": "2023-06-02T09:00:00",
+                "timeZone": "America/Los_Angeles",
 
-        event_result = service.events().list(calenderId="primary", timeMin=now, maxResults=10, singleEvents=True, orderBy="startTime")
-        events = event_result.get("items", [])
+            },
 
-        if not events:
-            print("No upcoming events found!")
-            return
-        
-        for event in events:
-            start = event["start"].get("dateTime", event["start"].get("date"))
-            print(start,event["summary"])
+            "end": {
+                "dateTime": "2023-06-02T17:00:00",
+                "timeZone": "America/Los_Angeles",
+                
+            },
 
-            
+            "recurrence": [
+                "RRULE:FREQ=DAILY;COUNT=3"
+            ],
+
+            "attendees": [
+                {"email": "timarafeh2004@gmail.com"},
+                {"email": "someemailthatdoesnotexist@mail.com"}
+            ]
+        }
+
+        event = service.events().insert(calendarId="primary",body=event).execute()
+
+        print(f"Event created {event.get('htmlLink')}")
+
     except HttpError as error:
         print("An error occured: ", error)
 
