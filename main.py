@@ -86,30 +86,29 @@ def launch_gui(events, gmail_service):
     root = tk.Tk()
     root.title("MeetingMate")
     root.geometry('1920x1080')
-    email_list = ['timarafeh2004@gmail.com', 'gerdeskerh@gmail.com', 'speedyslaytaker2004@gmail.com']
+    email_list = ['timarafeh2004@gmail.com', 'speedyslaytaker2004@gmail.com']
 
-    # Create a frame for emails on the left
+    # Frame for emails on the left
     email_frame = tk.Frame(root)
-    email_frame.pack(side='left', fill='y', padx=10, pady=5)
+    email_frame.pack(side='left', fill='both', expand=True)
 
-    # Email listbox
+    # Label for email selection
     email_label = tk.Label(email_frame, text="Select email to send reminders to:", font=("Arial", 12))
     email_label.pack(anchor='nw', padx=10, pady=5)
 
-    # Add the Listbox to the email frame
-    email_listbox = tk.Listbox(email_frame, height=10, width=50, selectmode='multiple', exportselection=0,
-                               font=("Helvetica", 10), bg="#f7f7f7", highlightcolor="#6e6e6e", 
-                               bd=0, highlightthickness=0, relief='flat')
-    email_listbox.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+    # Listbox for emails
+    email_listbox = tk.Listbox(email_frame, height=20, width=50, selectmode='multiple', exportselection=0,
+                               font=("Helvetica", 10), bg="#f7f7f7", fg="#333333",
+                               relief='solid', bd=1, highlightthickness=1, highlightbackground="#cccccc")
+    email_listbox.pack(side="top", fill="both", expand=True, padx=10, pady=5)
 
-    # Scrollbar for the Listbox
-    scrollbar = tk.Scrollbar(email_frame, orient="vertical", command=email_listbox.yview)
-    scrollbar.pack(side="right", fill="y")
-    email_listbox.config(yscrollcommand=scrollbar.set)
-    
+    # Populate the Listbox with email addresses
     for email in email_list:
         email_listbox.insert(tk.END, email)
-    
+
+    # Frame for events on the right
+    event_frame = tk.Frame(root)
+    event_frame.pack(side='right', fill='both', expand=True)
 
     # Store checkbox states
     event_checkboxes = {}
@@ -182,46 +181,6 @@ def main():
 
         # Launch the GUI for selecting events to send emails
         launch_gui(upcoming_events, gmail_service)
-
-        '''
-        event = {
-            "summary": "My Python Event",
-            "location": "Somewhere Online",
-            "description": "Some more details on this awesome event",
-            "colorId": 6,
-            "start": {
-                "dateTime": "2023-12-28T00:00:00",
-                "timeZone": "America/Los_Angeles",
-
-            },
-
-            "end": {
-                "dateTime": "2023-12-28T17:00:00",
-                "timeZone": "America/Los_Angeles",
-                
-            },
-
-            "recurrence": [
-                "RRULE:FREQ=DAILY;COUNT=1"
-            ],
-
-            "attendees": [
-                {"email": "timarafeh2004@gmail.com"},
-                {"email": "targetemail@mail.com"}
-            ]
-        }
-
-        event = service.events().insert(calendarId="primary",body=event).execute()
-        print(f"Event created {event.get('htmlLink')}"
-
-
-        for attendee in event['attendees']:
-            email = attendee['email']
-            message = create_message('timarafeh2004@gmail.com', email, 'Event Reminder', event)
-            send_message(gmail_service, 'me', message)
-        '''
-
-
 
     except HttpError as error:
         print("An error occured: ", error)
