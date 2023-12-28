@@ -1,5 +1,7 @@
 # MeetingMate
 
+NOTE: This program depends on a token.json file and a credentials.json file, to properly use this program you will need to authenticate your own tokens for the APIs to work properly, I removed the already existing token and credential files as they pose to be a security risk.
+
 This Python script is designed to integrate with the Google Calendar and Gmail APIs to automate the process of sending reminders for upcoming events. It features a user interface built with Tkinter, which allows users to select one-on-one meetings from their Google Calendar and send email reminders to the participants.
 
 Key Features:
