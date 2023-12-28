@@ -17,6 +17,9 @@ from datetime import datetime, timezone
 from email.mime.text import MIMEText
 import base64
 
+import tkinter as tk
+from tkinter import messagebox
+
 def create_message(sender, to, subject, event):
     start_time = event['start'].get('dateTime', event['start'].get('date'))
     end_time = event['end'].get('dateTime', event['end'].get('date'))
@@ -79,6 +82,82 @@ def convert_utc_to_ampm(utc_time_str):
     return local_time.strftime('%Y-%m-%d %I:%M %p')
 
 
+def launch_gui(events, gmail_service):
+    root = tk.Tk()
+    root.title("MeetingMate")
+    root.geometry('1920x1080')
+    email_list = ['timarafeh2004@gmail.com', 'gerdeskerh@gmail.com', 'speedyslaytaker2004@gmail.com']
+
+    # Create a frame for emails on the left
+    email_frame = tk.Frame(root)
+    email_frame.pack(side='left', fill='y', padx=10, pady=5)
+
+    # Email listbox
+    email_label = tk.Label(email_frame, text="Select email to send reminders to:", font=("Arial", 12))
+    email_label.pack(anchor='nw', padx=10, pady=5)
+
+    # Add the Listbox to the email frame
+    email_listbox = tk.Listbox(email_frame, height=10, width=50, selectmode='multiple', exportselection=0,
+                               font=("Helvetica", 10), bg="#f7f7f7", highlightcolor="#6e6e6e", 
+                               bd=0, highlightthickness=0, relief='flat')
+    email_listbox.pack(side="left", fill="both", expand=True, padx=10, pady=5)
+
+    # Scrollbar for the Listbox
+    scrollbar = tk.Scrollbar(email_frame, orient="vertical", command=email_listbox.yview)
+    scrollbar.pack(side="right", fill="y")
+    email_listbox.config(yscrollcommand=scrollbar.set)
+    
+    for email in email_list:
+        email_listbox.insert(tk.END, email)
+    
+
+    # Store checkbox states
+    event_checkboxes = {}
+    for i, event in enumerate(events):
+        # Apply the time conversion for display
+        start_time = event['start'].get('dateTime', event['start'].get('date'))
+        end_time = event['end'].get('dateTime', event['end'].get('date'))
+        if 'dateTime' in event['start']:
+            start_time = convert_utc_to_ampm(start_time)
+        if 'dateTime' in event['end']:
+            end_time = convert_utc_to_ampm(end_time)
+
+        event_description = f"{event['summary']} on {start_time} to {end_time}"
+        var = tk.IntVar(value=1)  # Default to checked
+        chk = tk.Checkbutton(root, text=event_description, variable=var,
+                             font=('Arial',12),
+                             activebackground="light blue",
+                             bg="light grey",
+                             selectcolor="grey",
+                             padx=20,
+                             pady=5)
+
+        chk.pack(anchor='nw', padx=10, pady=5)
+        event_checkboxes[event['id']] = (var, event)
+
+    def on_send_emails():
+        selected_indices = email_listbox.curselection()
+        if not selected_indices:
+            messagebox.showwarning("Warning", "No email selected.")
+            return
+
+        for event_id, (var, event) in event_checkboxes.items():
+            if var.get() == 1:  # If the checkbox is checked
+                for i in selected_indices:
+                    selected_email = email_list[i]
+                    # Use the selected email to send the message
+                    message = create_message('timarafeh2004@gmail.com', selected_email, 'Event Reminder', event)
+                    send_message(gmail_service, 'me', message)
+
+        messagebox.showinfo("Info", "Emails sent successfully")
+        root.destroy()
+
+    # Send button
+    send_btn = tk.Button(root, text="Send Emails", command=on_send_emails)
+    send_btn.pack(side='bottom', padx=10, pady=10)
+
+    root.mainloop()
+
 def main():
     creds = None
     exit
@@ -100,14 +179,11 @@ def main():
         gmail_service = build("gmail", "v1", credentials=creds)
 
         upcoming_events = get_upcoming_events(service, number_of_events=10)
-        for event in upcoming_events:
-            if 'attendees' in event:
-                for attendee in event['attendees']:
-                    if 'email' in attendee:
-                        email = attendee['email']
-                        message = create_message('timarafeh2004@gmail.com', email, 'Event Reminder', event)
-                        send_message(gmail_service, 'me', message)
 
+        # Launch the GUI for selecting events to send emails
+        launch_gui(upcoming_events, gmail_service)
+
+        '''
         event = {
             "summary": "My Python Event",
             "location": "Somewhere Online",
@@ -136,13 +212,14 @@ def main():
         }
 
         event = service.events().insert(calendarId="primary",body=event).execute()
-        print(f"Event created {event.get('htmlLink')}")
+        print(f"Event created {event.get('htmlLink')}"
 
 
         for attendee in event['attendees']:
             email = attendee['email']
             message = create_message('timarafeh2004@gmail.com', email, 'Event Reminder', event)
             send_message(gmail_service, 'me', message)
+        '''
 
 
 
