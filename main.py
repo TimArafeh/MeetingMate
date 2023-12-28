@@ -10,11 +10,28 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/gmail.compose"]
 
-
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 import base64
 
-def create_message(sender, to, subject, message_text):
+def create_message(sender, to, subject, event):
+    start_time = event['start'].get('dateTime', event['start'].get('date'))
+    message_text = f"""
+    Hello,
+
+    You have an upcoming one-on-one meeting scheduled in the Accelerator Program.
+
+    Meeting Details:
+    Summary: {event['summary']}
+    Date & Time: {start_time}
+    Location: {event.get('location', 'N/A')}
+    Description: {event.get('description', 'No additional description')}
+
+    Please make sure to be present and engage actively in the meeting.
+
+    Best regards,
+    [Your Name]
+    """
     message = MIMEText(message_text)
     message['to'] = to
     message['from'] = sender
@@ -29,6 +46,13 @@ def send_message(service, user_id, message):
     except HttpError as error:
         print(f"An error occurred: {error}")
         return None
+
+def get_upcoming_events(service, number_of_events=10):
+    now = datetime.now(timezone.utc).isoformat()
+    events_result = service.events().list(calendarId='primary', timeMin=now,
+                                          maxResults=number_of_events, singleEvents=True,
+                                          orderBy='startTime').execute()
+    return events_result.get('items', [])
 
 def main():
     creds = None
@@ -48,6 +72,16 @@ def main():
 
     try:
         service = build("calendar", "v3", credentials=creds)
+        gmail_service = build("gmail", "v1", credentials=creds)
+
+        upcoming_events = get_upcoming_events(service, number_of_events=10)
+        for event in upcoming_events:
+            if 'attendees' in event:
+                for attendee in event['attendees']:
+                    if 'email' in attendee:
+                        email = attendee['email']
+                        message = create_message('timarafeh2004@gmail.com', email, 'Event Reminder', event)
+                        send_message(gmail_service, 'me', message)
 
         event = {
             "summary": "My Python Event",
@@ -55,24 +89,24 @@ def main():
             "description": "Some more details on this awesome event",
             "colorId": 6,
             "start": {
-                "dateTime": "2023-06-02T09:00:00",
+                "dateTime": "2023-12-28T00:00:00",
                 "timeZone": "America/Los_Angeles",
 
             },
 
             "end": {
-                "dateTime": "2023-06-02T17:00:00",
+                "dateTime": "2023-12-28T17:00:00",
                 "timeZone": "America/Los_Angeles",
                 
             },
 
             "recurrence": [
-                "RRULE:FREQ=DAILY;COUNT=3"
+                "RRULE:FREQ=DAILY;COUNT=1"
             ],
 
             "attendees": [
                 {"email": "timarafeh2004@gmail.com"},
-                {"email": "someemailthatdoesnotexist@mail.com"}
+                {"email": "targetemail@mail.com"}
             ]
         }
 
@@ -80,11 +114,11 @@ def main():
         print(f"Event created {event.get('htmlLink')}")
 
 
-        for attendee in event['atendees']:
+        for attendee in event['attendees']:
             email = attendee['email']
-            email_body = f"Hello, \n\nYou have an upcoming event: {event['summary']} on {event['start']['dateTime']}.\n\nBest regards."
-            message = create_message('your-email@gmail.com', email, 'Event Reminder', email_body)
-            send_message(service, 'me', message)
+            message = create_message('timarafeh2004@gmail.com', email, 'Event Reminder', event)
+            send_message(gmail_service, 'me', message)
+
 
 
     except HttpError as error:
