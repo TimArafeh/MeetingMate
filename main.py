@@ -10,12 +10,23 @@ from googleapiclient.errors import HttpError
 SCOPES = ["https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/gmail.compose"]
 
+from datetime import datetime
+import pytz
+
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
 import base64
 
 def create_message(sender, to, subject, event):
     start_time = event['start'].get('dateTime', event['start'].get('date'))
+    end_time = event['end'].get('dateTime', event['end'].get('date'))
+
+    # Convert UTC to AM/PM format if dateTime is present
+    if 'dateTime' in event['start']:
+        start_time = convert_utc_to_ampm(start_time)
+    if 'dateTime' in event['end']:
+        end_time = convert_utc_to_ampm(end_time)
+
     message_text = f"""
     Hello,
 
@@ -23,7 +34,7 @@ def create_message(sender, to, subject, event):
 
     Meeting Details:
     Summary: {event['summary']}
-    Date & Time: {start_time}
+    Date & Time: {start_time} to {end_time}
     Location: {event.get('location', 'N/A')}
     Description: {event.get('description', 'No additional description')}
 
@@ -53,6 +64,20 @@ def get_upcoming_events(service, number_of_events=10):
                                           maxResults=number_of_events, singleEvents=True,
                                           orderBy='startTime').execute()
     return events_result.get('items', [])
+
+def convert_utc_to_ampm(utc_time_str):
+    print("Original UTC Time:", utc_time_str)  # Debug print
+
+    # Parse the UTC time string with its timezone offset
+    utc_time_with_tz = datetime.strptime(utc_time_str, '%Y-%m-%dT%H:%M:%S%z')
+
+    # Convert to local time
+    local_time = utc_time_with_tz.astimezone(pytz.timezone('America/Los_Angeles'))
+    print("Converted Local Time:", local_time.strftime('%Y-%m-%d %I:%M %p'))  # Debug print
+
+    # Format the time in AM/PM format
+    return local_time.strftime('%Y-%m-%d %I:%M %p')
+
 
 def main():
     creds = None
